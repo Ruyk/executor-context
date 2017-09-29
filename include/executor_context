@@ -1,0 +1,46 @@
+/*
+  Copyright 2017 Ruyman Reyes 
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ */
+#ifndef EXECUTOR_CONTEXT
+
+namespace experimental
+{
+
+class ExecutionContext
+{
+   public:
+   ~ExecutionContext();
+
+   ExecutionContext(ExecutionContext const&) = delete;
+   ExecutionContext(ExecutionContext&&) = delete;
+
+   execution_resource_t const& execution_resource() const noexcept;
+
+   void executor() = delete;
+
+   // Waiting functions:
+   void wait() = delete;
+   template <class Clock, class Duration>
+   bool wait_until(chrono::time_point<Clock, Duration> const&) = delete;
+   template <class Rep, class Period>
+   bool wait_for(chrono::duration<Rep, Period> const&) = delete;
+
+   private:
+};
+};
+
+#endif // EXECUTOR_CONTEXT
+
+// vim: filetype=cpp

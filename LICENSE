@@ -1,3 +1,11 @@
+The current project is licensed under Apache 2 License (See below), except for 
+the following components:
+
+* gsl headers, under MIT License (see include/gsl/*)
+* CMake module for HWloc, under BSD license (see cmake/Modules/FindHwloc.cmake)
+
+-------------------------------------------------------------------------------
+
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/

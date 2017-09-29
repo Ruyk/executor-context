@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# VIM
+
+*.swp
+*.swo
+
