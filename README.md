@@ -6,7 +6,7 @@ hwloc and others.
 
 
 Instructions
-^^^^^^^^^^^^
+------------
 
 1. Create a build directory and change to it
 
@@ -24,7 +24,7 @@ All tests should pass
 
 
 Requirements
-^^^^^^^^^^^^
+------------
 
 Ubuntu Linux 16.04:
 
@@ -35,7 +35,7 @@ Ubuntu Linux 16.04:
 Build system will try to run clang-tidy if found.
 
 Contains
-^^^^^^^^
+--------
 
 * gsl headers, under MIT License
 * CMake module for HWloc, under BSD license.
