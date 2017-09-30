@@ -21,24 +21,53 @@ namespace hwlocxx
 namespace experimental
 {
 
+  struct thread_execution_resource_t {
+    topology topo_;
+
+    thread_execution_resource_t() = default;
+    ~thread_execution_resource_t() = default;
+    thread_execution_resource_t(const thread_execution_resource_t&) = delete;
+    thread_execution_resource_t(thread_execution_resource_t&&) = default;
+    thread_execution_resource_t& operator=(thread_execution_resource_t&&) = default;
+    thread_execution_resource_t& operator=(const thread_execution_resource_t&) = default;
+
+    topology get_topology() {
+      return topo_;
+    }
+
+    size_t concurrency() const noexcept {
+      // Count of threads
+      return topo_.get_width_at_depth(0); 
+    }
+
+    size_t partition_size() const noexcept {
+      // total number of CPUs
+      return topo_.get_width_at_depth(0);
+    }
+
+    const thread_execution_resource_t & partition( size_t i ) const noexcept = delete;
+
+    const thread_execution_resource_t & member_of() const noexcept = delete;
+  };
+
   class locality_executor {
     public:
 
-    locality_executor(topology topo)
-      : topo_{topo} { };
+    explicit locality_executor(thread_execution_resource_t& eR)
+      : eR_{eR} { };
 
     /*
      * Outputs placement information for the current thread
      * to the givem output stream
      */
     std::ostream& stream_placement_info(std::ostream& out) {
-      const auto& currentThreadCPU = topo_.get_last_cpu_location();
+      const auto& currentThreadCPU = eR_.get_topology().get_last_cpu_location();
       int i = currentThreadCPU.first();
-      auto obj = topo_.get_object_by_os_index(i);
+      auto obj = eR_.get_topology().get_object_by_os_index(i);
       out << " Thread running in : "
         << " Logical " << obj.get_logical_index()
         << " Physical " << i 
-        << std::endl;
+        << std::endl; 
       return out;
     }
 
@@ -54,13 +83,13 @@ namespace experimental
         try {
           // Get thread (implicit: THREAD)
           const auto& currentThreadCPU
-                        = topo_.get_last_cpu_location();
+                        = eR_.get_topology().get_last_cpu_location();
           stream_placement_info(std::cout);
           // Get allowed cpus (implicit: PROCESS)
-          const auto& allowedCPUs = topo_.get_cpubind();
+          const auto& allowedCPUs = eR_.get_topology().get_cpubind();
           // Other CPUs that are not the current one
           auto remainingCPU{allowedCPUs.and_not(currentThreadCPU)};
-          topo_.set_cpubind(remainingCPU);
+          eR_.get_topology().set_cpubind(remainingCPU);
           stream_placement_info(std::cout);
           // Run user-functor
           auto result = func();
@@ -74,14 +103,12 @@ namespace experimental
     }
     private:
     
-    topology topo_;
+    thread_execution_resource_t& eR_;
   };
 
    class ExecutionContext
    {
   public:
-      using execution_resource_t = int;  // dummy for now
-
       ExecutionContext() = default;
 
       ~ExecutionContext() = default;
@@ -89,10 +116,14 @@ namespace experimental
       ExecutionContext(ExecutionContext const&) = delete;
       ExecutionContext(ExecutionContext&&) = delete;
 
-      execution_resource_t const& execution_resource() const noexcept;
+      using execution_resource_t = thread_execution_resource_t;
+
+      execution_resource_t const & execution_resource() const noexcept {
+        return eR_;
+      }
 
       locality_executor executor() {
-        return locality_executor(get_topo());
+        return locality_executor(eR_);
       }
 
       // Waiting functions:
@@ -103,12 +134,13 @@ namespace experimental
       template <class Rep, class Period>
       bool wait_for(std::chrono::duration<Rep, Period> const&) = delete;
 
+      // Returns the topology of the system
       inline topology get_topo() const {
-        return topo_;
+        return eR_.topo_;
       }
 
   private:
-      topology topo_;
+      execution_resource_t eR_;
 
    };
 

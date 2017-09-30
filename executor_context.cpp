@@ -30,6 +30,11 @@ int main(void)
    // hwloc-based ExecutorContext
    hwlocxx::experimental::ExecutionContext hwEC;
 
+   auto& eR = hwEC.execution_resource();
+
+   std::cout << "Concurrency: " << eR.concurrency() << std::endl;
+   std::cout << "Partition Size: " << eR.partition_size() << std::endl;
+
    auto mE = hwEC.executor();
 
    auto fut = mE.twoway_execute([&]() -> unsigned {
