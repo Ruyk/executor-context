@@ -1,4 +1,4 @@
-/* Copyright 2017 Ruyman Reyes 
+/* Copyright 2017 Ruyman Reyes
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -13,9 +13,8 @@
   limitations under the License.
 **/
 
-#include <hwlocxx.hpp>
 #include <allocator.hpp>
+#include <hwlocxx.hpp>
 #include <hwlocxx_context.hpp>
-
 
 // vim: set filetype=cpp

@@ -1,5 +1,5 @@
 /**
-  Copyright 2017 Ruyman Reyes 
+  Copyright 2017 Ruyman Reyes
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 
 */
 #include <algorithm>
+#include <future>
 #include <iostream>
 #include <numeric>
 #include <type_traits>
-#include <future>
 
 // Include the Hwloc C++ wrapper
 #include <hwlocxx>
@@ -36,11 +36,15 @@ int main(void)
    std::cout << "Partition Size: " << eR.partition_size() << std::endl;
 
    auto mE = hwEC.executor();
+   /**
+    * eR.allocator();
+    *
+    */
 
    auto fut = mE.twoway_execute([&]() -> unsigned {
-       std::cout << " Hello World " << std::endl;
-       return 42u;
-       });
-    
+      std::cout << " Hello World " << std::endl;
+      return 42u;
+   });
+
    return (42 - fut.get());
 };

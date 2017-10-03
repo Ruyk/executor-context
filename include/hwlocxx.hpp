@@ -33,6 +33,11 @@ using __bitMaskStruct = struct hwloc_bitmap_s;
 namespace hwlocxx
 {
 
+  enum class cpubind { 
+    process = HWLOC_CPUBIND_PROCESS,
+    thread = HWLOC_CPUBIND_THREAD
+  };
+
 /**
  * Contains a pointer to a hwloc bitmap structure
  */
@@ -204,18 +209,26 @@ class topology
    /* Returns the last cpu where the thread executed
     * @todo Enable passing CPUBIND as parameter
     */
-   bitmap get_last_cpu_location() const {
+   bitmap get_last_cpu_location(cpubind b) const {
      bitmap loc;
-     hwloc_get_last_cpu_location(get(), loc.get(), HWLOC_CPUBIND_THREAD);
+     auto err = hwloc_get_last_cpu_location(get(), loc.get(), 
+                static_cast<int>(b));
+     if (err) {
+         std::terminate();
+     }
      return {loc};
    }
 
    /* Returns the current CPU bind set for the process
     * @todo Enable passing CPUBIND as parameter
     */
-   bitmap get_cpubind() const {
+   bitmap get_cpubind(cpubind b) const {
      bitmap cpuBind;
-     hwloc_get_cpubind(get(), cpuBind.get(), HWLOC_CPUBIND_PROCESS);
+     auto err = hwloc_get_cpubind(get(), cpuBind.get(), 
+         static_cast<int>(b));
+     if (err) {
+       std::terminate();
+     }
      return {cpuBind};
    }
 

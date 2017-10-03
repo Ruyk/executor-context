@@ -1,4 +1,4 @@
-/* Copyright 2017 Ruyman Reyes 
+/* Copyright 2017 Ruyman Reyes
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -16,83 +16,79 @@
 #ifndef HWLOCXX_ALLOCATOR_HPP
 #define HWLOCXX_ALLOCATOR_HPP
 
-namespace hwlocxx {
+namespace hwlocxx
+{
 
-template<class T>
+template <class T>
 class allocator
 {
-  public:
-    using value_type = T;
-    using size_type = size_t;
-    using difference_type = ptrdiff_t;
-    using pointer = T*;
-    using const_pointer = const T*;
-    using reference = T&;
-    using const_reference = const T&;
-    
-    allocator(topology topo,
-              topology::object obj) : topo_{topo}, obj_{obj} {
-    }
+   public:
+   using value_type = T;
+   using size_type = size_t;
+   using difference_type = ptrdiff_t;
+   using pointer = T*;
+   using const_pointer = const T*;
+   using reference = T&;
+   using const_reference = const T&;
 
-    allocator(const allocator&) = default;
-    allocator(allocator&&) = default;
-    allocator& operator=(const allocator&) = default;
-    allocator& operator=(allocator&&) = default;
+   allocator(topology topo, topology::object obj) : topo_{topo}, obj_{obj} {}
 
-    /**
-     * Construct element in place
-     */
-    void construct(pointer p, const_reference val) {
-      ::new ((T*) p) T(val);
-    }
+   allocator(const allocator&) = default;
+   allocator(allocator&&) = default;
+   allocator& operator=(const allocator&) = default;
+   allocator& operator=(allocator&&) = default;
 
-    /**
-     * Address of an element x
-     */
-    pointer           address(reference x) const { return &x; }
+   /**
+    * Construct element in place
+    */
+   void construct(pointer p, const_reference val) { ::new ((T*) p) T(val); }
 
-    /**
-     * Address of an element x (const)
-     */
-    const_pointer     address(const_reference x) const { return &x; }
-  
-    /**
-     * Allocate size value_type elements
-     */
-    value_type* allocate(size_t size)
-    {
+   /**
+    * Address of an element x
+    */
+   pointer address(reference x) const { return &x; }
+
+   /**
+    * Address of an element x (const)
+    */
+   const_pointer address(const_reference x) const { return &x; }
+
+   /**
+    * Allocate size value_type elements
+    */
+   value_type* allocate(size_t size)
+   {
       value_type* result = nullptr;
-      result = static_cast<value_type*>(hwloc_alloc_membind(topo_.get(), 
-          size * sizeof(value_type), obj_.get()->nodeset,
-          HWLOC_MEMBIND_BIND,
-          HWLOC_MEMBIND_BYNODESET));
+      result = static_cast<value_type*>(hwloc_alloc_membind(
+          topo_.get(), size * sizeof(value_type), obj_.get()->nodeset,
+          HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET));
       return result;
-    }
-  
-    /**
-     * Deallocate size value_type elements
-     */
-    void deallocate(value_type* ptr, size_t size)
-    {
-      hwloc_free(topo_.get(), ptr, size * sizeof(value_type));
-    }
+   }
 
-  private:
-    topology topo_;
-    topology::object obj_;
+   /**
+    * Deallocate size value_type elements
+    */
+   void deallocate(value_type* ptr, size_t size)
+   {
+      hwloc_free(topo_.get(), ptr, size * sizeof(value_type));
+   }
+
+   private:
+   topology topo_;
+   topology::object obj_;
 };
 
-template<class T1, class T2>
+template <class T1, class T2>
 bool operator==(const allocator<T1>&, const allocator<T2>&)
 {
-  return true;
+   return true;
 }
 
-template<class T1, class T2>
+template <class T1, class T2>
 bool operator!=(const allocator<T1>& lhs, const allocator<T2>& rhs)
 {
-  return !(lhs == rhs);
+   return !(lhs == rhs);
 }
 
-}  // namespace hwlocxx
-#endif  // HWLOCXX_ALLOCATOR_HPP
+} // namespace hwlocxx
+#endif // HWLOCXX_ALLOCATOR_HPP
