@@ -27,6 +27,7 @@ namespace experimental
       bitmap partition_;
 
       thread_execution_resource_t() = default;
+
       ~thread_execution_resource_t() = default;
       thread_execution_resource_t(const thread_execution_resource_t&) = delete;
       thread_execution_resource_t(thread_execution_resource_t&&) = default;
@@ -56,13 +57,22 @@ namespace experimental
 
       void place_thread()
       {
+         // Execute on a different thread that is on the same processor
+         // (will only work for HT)
+         // This returns an os index
          const auto& currentThreadCPU =
              get_topology().get_last_cpu_location(cpubind::thread);
          stream_placement_info(std::cout);
          const auto& allowedCPUs = get_topology().get_cpubind(cpubind::process);
          // Other CPUs that are not the current one
          auto remainingCPU{allowedCPUs.and_not(currentThreadCPU)};
-         get_topology().set_cpubind(remainingCPU);
+         // Other CPUs in the same core
+         auto obj =
+             get_topology().get_object_by_os_index(currentThreadCPU.first());
+         auto otherCore = obj.get_closest()[0];
+         std::cout << "Obj is " << otherCore << std::endl;
+         // get_topology().get_object_by_type(HWLOC_OBJ_CORE, 0);
+         get_topology().set_cpubind(remainingCPU, cpubind::thread);
          stream_placement_info(std::cout);
       }
 

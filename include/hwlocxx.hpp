@@ -135,6 +135,12 @@ class topology
       {
       }
 
+      object(gsl::not_null<const topology*> topo, 
+             hwloc_obj_t obj) 
+          : obj_{obj}, topo_{topo}
+      {
+      }
+
       object(const object& rhs) = default;
       object(object&& rhs) = default;
       object& operator=(const object& rhs) = default;
@@ -146,6 +152,20 @@ class topology
 
       int get_logical_index() const {
         return obj_.get()->logical_index;
+      }
+
+      std::vector<object> get_closest() const {
+        const size_t maxObjects = 10u;
+        std::vector<hwloc_obj_t> hwObjs(maxObjects);
+        unsigned numElems = 
+          hwloc_get_closest_objs(topo_->get(), 
+              obj_.get(), hwObjs.data(), maxObjects);
+        std::vector<object> closest;
+        closest.reserve(numElems);
+        for (unsigned i = 0; i < numElems; i++) {
+          closest.emplace_back(topo_, hwObjs[i]);
+        }
+        return closest;
       }
 
       friend std::ostream& operator<<(std::ostream& stream, const object& rhs)
@@ -207,7 +227,6 @@ class topology
    }
 
    /* Returns the last cpu where the thread executed
-    * @todo Enable passing CPUBIND as parameter
     */
    bitmap get_last_cpu_location(cpubind b) const {
      bitmap loc;
@@ -220,7 +239,6 @@ class topology
    }
 
    /* Returns the current CPU bind set for the process
-    * @todo Enable passing CPUBIND as parameter
     */
    bitmap get_cpubind(cpubind b) const {
      bitmap cpuBind;
@@ -233,10 +251,9 @@ class topology
    }
 
    /* Sets a new CPU bind set for the THREAD
-    * @todo Enable passing CPUBIND as parameter
     */
-   void set_cpubind(bitmap new_set) {
-     hwloc_set_cpubind(get(), new_set.get(), HWLOC_CPUBIND_THREAD);
+   void set_cpubind(bitmap new_set, cpubind b) {
+     hwloc_set_cpubind(get(), new_set.get(), static_cast<int>(b));
    }
 
    protected:

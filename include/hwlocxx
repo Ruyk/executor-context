@@ -13,8 +13,8 @@
   limitations under the License.
 **/
 
-#include <allocator.hpp>
 #include <hwlocxx.hpp>
+#include <allocator.hpp>
 #include <hwlocxx_context.hpp>
 
 // vim: set filetype=cpp

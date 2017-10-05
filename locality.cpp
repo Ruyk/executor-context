@@ -1,5 +1,5 @@
 /**
-  Copyright 2017 Ruyman Reyes 
+  Copyright 2017 Ruyman Reyes
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -40,9 +40,11 @@ int main(void)
     * Example:
     *   Print the topology
     */
-   for (depth = 0; depth < topodepth; depth++) {
+   for (depth = 0; depth < topodepth; depth++)
+   {
       std::cout << "*** Objects at level " << depth << std::endl;
-      for (i = 0; i < topo.get_width_at_depth(depth); i++) {
+      for (i = 0; i < topo.get_width_at_depth(depth); i++)
+      {
          std::cout << "Index " << i << ":" << topo.get_obj(depth, i)
                    << std::endl;
       }
