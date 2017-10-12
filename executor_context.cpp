@@ -25,7 +25,7 @@
 // Include the Hwloc C++ wrapper
 #include <hwlocxx>
 
-int main(void)
+int main()
 {
    // hwloc-based ExecutorContext
    hwlocxx::experimental::ExecutionContext hwEC;
