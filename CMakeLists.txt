@@ -54,6 +54,15 @@ set_property(TARGET executor_context PROPERTY CXX_STANDARD 17)
 set_property(TARGET executor_context PROPERTY CXX_STANDARD_REQUIRED ON)
 add_test(executor_context executor_context)
 
+add_executable (components components.cpp)
+target_link_libraries(components hwlocxx)
+target_include_directories(components PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(components ${Hwloc_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set_property(TARGET components PROPERTY CXX_STANDARD 17)
+set_property(TARGET components PROPERTY CXX_STANDARD_REQUIRED ON)
+add_test(components components)
+
+
 
 if (CLANG_TIDY_EXE)
   set_property(TARGET locality PROPERTY CXX_CLANG_TIDY "${DO_CLANG_TIDY}")

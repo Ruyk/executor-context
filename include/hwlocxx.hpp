@@ -1,5 +1,5 @@
 /**
-  Copyright 2017 Ruyman Reyes 
+  Copyright 2017 Ruyman Reyes
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
 
    file: hwlocxx.hpp A trivial hwlocxx wrapper
 
@@ -22,6 +22,7 @@
 #include <gsl/gsl>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <hwloc.h>
 
@@ -33,75 +34,70 @@ using __bitMaskStruct = struct hwloc_bitmap_s;
 namespace hwlocxx
 {
 
-  enum class cpubind { 
-    process = HWLOC_CPUBIND_PROCESS,
-    thread = HWLOC_CPUBIND_THREAD
-  };
+enum class cpubind
+{
+   process = HWLOC_CPUBIND_PROCESS,
+   thread = HWLOC_CPUBIND_THREAD
+};
 
 /**
  * Contains a pointer to a hwloc bitmap structure
  */
-class bitmap {
-  public:
-
-    bitmap()
-      : bMap_{nullptr} {
+class bitmap
+{
+   public:
+   bitmap() : bMap_{nullptr}
+   {
       hwloc_bitmap_t ptr = hwloc_bitmap_alloc();
-      bMap_ = std::shared_ptr<__bitMaskStruct> {ptr, 
-                bitmapDeleter()};
-    }
+      bMap_ = std::shared_ptr<__bitMaskStruct>{ptr, bitmapDeleter()};
+   }
 
-    bitmap(hwloc_bitmap_t ptr)
-      : bMap_{ptr, bitmapDeleter()} { }
+   bitmap(hwloc_bitmap_t ptr) : bMap_{ptr, bitmapDeleter()} {}
 
-    ~bitmap() = default;
+   ~bitmap() = default;
 
-    bitmap(const bitmap&) = default;
-    bitmap(bitmap&&) = default;
-    bitmap& operator=(const bitmap& bMap) = default;
-    bitmap& operator=(bitmap&& bMap) = default;
+   bitmap(const bitmap&) = default;
+   bitmap(bitmap&&) = default;
+   bitmap& operator=(const bitmap& bMap) = default;
+   bitmap& operator=(bitmap&& bMap) = default;
 
-    /* Modifying and not */
-    bitmap and_not(bitmap rhs) {
+   /* Modifying and not */
+   bitmap and_not(bitmap rhs)
+   {
       hwloc_bitmap_andnot(bMap_.get(), bMap_.get(), rhs.get());
       return *this;
-    }
+   }
 
-    bitmap and_not(bitmap rhs) const {
+   bitmap and_not(bitmap rhs) const
+   {
       bitmap ret;
       hwloc_bitmap_andnot(ret.get(), bMap_.get(), rhs.get());
       return ret;
-    }
+   }
 
-    int first() const {
-      return hwloc_bitmap_first(get());
-    }
+   int first() const { return hwloc_bitmap_first(get()); }
 
-    hwloc_bitmap_t get() const {
-      return bMap_.get();
-    }
+   hwloc_bitmap_t get() const { return bMap_.get(); }
 
-    friend std::ostream& operator<<(std::ostream& stream, const bitmap& rhs)
-    {
+   friend std::ostream& operator<<(std::ostream& stream, const bitmap& rhs)
+   {
       char str[128];
       hwloc_bitmap_snprintf(str, 128, rhs.get());
       stream << str << std::endl;
       return stream;
-    }
+   }
 
+   private:
+   std::shared_ptr<__bitMaskStruct> bMap_;
 
-  private:
-    std::shared_ptr<__bitMaskStruct> bMap_;
-
-    /** 
-     * Custom deleters that guarantees bitmap is freed using the
-     * correct hwloc functionality
-     */
-    struct bitmapDeleter {
-    void operator()(hwloc_bitmap_t ptr) { 
-          hwloc_bitmap_free(ptr);
-        }
-    };
+   /**
+    * Custom deleters that guarantees bitmap is freed using the
+    * correct hwloc functionality
+    */
+   struct bitmapDeleter
+   {
+      void operator()(hwloc_bitmap_t ptr) { hwloc_bitmap_free(ptr); }
+   };
 };
 
 /**
@@ -117,14 +113,16 @@ class topology
    class object
    {
   public:
-      struct index {
-        using os = int;
+      struct index
+      {
+         using os = int;
       };
 
-      object(gsl::not_null<const topology*> topo, index::os i) 
-        : obj_{hwloc_get_pu_obj_by_os_index(topo->get(), i)},
-          topo_{topo} { }
-      
+      object(gsl::not_null<const topology*> topo, index::os i)
+          : obj_{hwloc_get_pu_obj_by_os_index(topo->get(), i)}, topo_{topo}
+      {
+      }
+
       object(gsl::not_null<const topology*> topo, int depth, int i)
           : obj_{hwloc_get_obj_by_depth(topo->get(), depth, i)}, topo_{topo}
       {
@@ -135,8 +133,7 @@ class topology
       {
       }
 
-      object(gsl::not_null<const topology*> topo, 
-             hwloc_obj_t obj) 
+      object(gsl::not_null<const topology*> topo, hwloc_obj_t obj)
           : obj_{obj}, topo_{topo}
       {
       }
@@ -150,22 +147,28 @@ class topology
       hwloc_obj_t get() { return obj_; }
       hwloc_obj_t get() const { return obj_; }
 
-      int get_logical_index() const {
-        return obj_.get()->logical_index;
+      gsl::not_null<const topology*> get_topo() const { return topo_; }
+
+      bool in_subtree(object subtree) const
+      {
+         return hwloc_obj_is_in_subtree(topo_->get(), obj_.get(),
+                                        subtree.get());
       }
 
-      std::vector<object> get_closest() const {
-        const size_t maxObjects = 10u;
-        std::vector<hwloc_obj_t> hwObjs(maxObjects);
-        unsigned numElems = 
-          hwloc_get_closest_objs(topo_->get(), 
-              obj_.get(), hwObjs.data(), maxObjects);
-        std::vector<object> closest;
-        closest.reserve(numElems);
-        for (unsigned i = 0; i < numElems; i++) {
-          closest.emplace_back(topo_, hwObjs[i]);
-        }
-        return closest;
+      int get_logical_index() const { return obj_.get()->logical_index; }
+
+      std::vector<object> get_closest() const
+      {
+         const size_t maxObjects = 10u;
+         std::vector<hwloc_obj_t> hwObjs(maxObjects);
+         unsigned numElems = hwloc_get_closest_objs(topo_->get(), obj_.get(),
+                                                    hwObjs.data(), maxObjects);
+         std::vector<object> closest;
+         closest.reserve(numElems);
+         for (unsigned i = 0; i < numElems; i++) {
+            closest.emplace_back(topo_, hwObjs[i]);
+         }
+         return closest;
       }
 
       friend std::ostream& operator<<(std::ostream& stream, const object& rhs)
@@ -186,9 +189,8 @@ class topology
    {
       hwloc_topology_t ptr = nullptr;
       hwloc_topology_init(&ptr);
-      topology_ = std::shared_ptr<hwloc_topology> {
-         ptr, [=](hwloc_topology_t ptr) { hwloc_topology_destroy(ptr); }
-      };
+      topology_ = std::shared_ptr<hwloc_topology>{
+          ptr, [=](hwloc_topology_t ptr) { hwloc_topology_destroy(ptr); }};
       hwloc_topology_load(topology_.get());
    }
 
@@ -205,7 +207,7 @@ class topology
 
    hwloc_topology_t get() const { return topology_.get(); }
 
-   object get_obj(int depth, int elem) { return {this, depth, elem}; }
+   object get_obj(int depth, int elem) const { return {this, depth, elem}; }
 
    int get_width_at_depth(int depth) const
    {
@@ -222,38 +224,54 @@ class topology
       return {this, type, id};
    }
 
-   object get_object_by_os_index(object::index::os i) const {
-     return {this, i};
+   object get_object_by_os_index(object::index::os i) const
+   {
+      return {this, i};
+   }
+
+   std::vector<object> get_objects(int lvl) const
+   {
+      const int maxObjects = get_width_at_depth(lvl);
+      std::vector<object> retObjs;
+      retObjs.reserve(maxObjects);
+
+      for (int i = 0; i < maxObjects; i++) {
+         retObjs.emplace_back(this, lvl, i);
+      }
+
+      return retObjs;
    }
 
    /* Returns the last cpu where the thread executed
     */
-   bitmap get_last_cpu_location(cpubind b) const {
-     bitmap loc;
-     auto err = hwloc_get_last_cpu_location(get(), loc.get(), 
-                static_cast<int>(b));
-     if (err) {
+   bitmap get_last_cpu_location(cpubind b) const
+   {
+      bitmap loc;
+      auto err =
+          hwloc_get_last_cpu_location(get(), loc.get(), static_cast<int>(b));
+      if (err) {
          std::terminate();
-     }
-     return {loc};
+      }
+      return {loc};
    }
 
    /* Returns the current CPU bind set for the process
     */
-   bitmap get_cpubind(cpubind b) const {
-     bitmap cpuBind;
-     auto err = hwloc_get_cpubind(get(), cpuBind.get(), 
-         static_cast<int>(b));
-     if (err) {
-       std::terminate();
-     }
-     return {cpuBind};
+   bitmap get_cpubind(cpubind b) const
+   {
+      bitmap cpuBind;
+      auto err = hwloc_get_cpubind(get(), cpuBind.get(), static_cast<int>(b));
+      if (err) {
+         std::terminate();
+      }
+      return {cpuBind};
    }
 
    /* Sets a new CPU bind set for the THREAD
     */
-   void set_cpubind(bitmap new_set, cpubind b) {
-     hwloc_set_cpubind(get(), new_set.get(), static_cast<int>(b));
+   void set_cpubind(bitmap new_set, cpubind b)
+   {
+      hwloc_set_cpubind(get(), new_set.get(), static_cast<int>(b));
    }
 
    protected:
