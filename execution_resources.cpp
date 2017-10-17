@@ -30,21 +30,22 @@
 #include <sstream>
 #include <vector>
 
+
 namespace hwlocxx
 {
 namespace experimental
 {
    namespace execution
    {
-      struct Component;
+      struct execution_resource;
       namespace detail
       {
 
-         std::vector<Component> make_components_from_level(
+         std::vector<execution_resource> make_components_from_level(
              gsl::not_null<const hwlocxx::topology*> topo_, int lvl)
          {
             auto objs = topo_->get_objects(lvl);
-            std::vector<Component> retVal;
+            std::vector<execution_resource> retVal;
             retVal.reserve(objs.size());
             for (auto o : objs) {
                retVal.emplace_back(o, lvl);
@@ -52,12 +53,12 @@ namespace experimental
             return retVal;
          }
 
-         std::vector<Component> make_components_from_level(
+         std::vector<execution_resource> make_components_from_level(
              gsl::not_null<const hwlocxx::topology*> topo_, int lvl,
              topology::object subtree)
          {
             auto objs = topo_->get_objects(lvl);
-            std::vector<Component> retVal;
+            std::vector<execution_resource> retVal;
             retVal.reserve(objs.size());
             for (auto o : objs) {
                if (o.in_subtree(subtree)) {
@@ -68,7 +69,7 @@ namespace experimental
          }
       }
 
-      struct Component
+      struct execution_resource
       {
 
          std::string name() const
@@ -78,7 +79,7 @@ namespace experimental
             return s.str();
          }
 
-         std::vector<Component> components()
+         std::vector<execution_resource> resources()
          {
             return detail::make_components_from_level(o_.get_topo(), depth_ + 1,
                                                       o_);
@@ -93,15 +94,15 @@ namespace experimental
 
          bool can_place_agent() const { return true; };
 
-         std::optional<Component> member_of() const
+         std::optional<execution_resource> member_of() const
          {
             /* if (depth_ > 0) {
-               return Component{}
+               return execution_resource{}
              } */
             return std::nullopt;
          }
 
-         Component(hwlocxx::topology::object o, size_t depth)
+         execution_resource(hwlocxx::topology::object o, size_t depth)
              : o_{o}, depth_{depth}
          {
          }
@@ -111,33 +112,37 @@ namespace experimental
          size_t depth_;
       };
 
-      auto components() -> decltype(std::vector<Component>())
-      {
-         static hwlocxx::topology topo_;
-         gsl::not_null<const hwlocxx::topology*> t{&topo_};
-         return detail::make_components_from_level(t, 0);
-      }
-   }
+   }  // namespace execution_resources
+  namespace this_system {
+    auto resources() -> decltype(std::vector<execution::execution_resource>())
+    {
+      static hwlocxx::topology topo_;
+      gsl::not_null<const hwlocxx::topology*> t{&topo_};
+      return execution::detail::make_components_from_level(t, 0);
+    }
+}   // this_system
+
+}  // namespace experimental
 }
-}
+
 
 int main()
 {
    // System level
-   auto cList = hwlocxx::experimental::execution::components();
+   auto cList = hwlocxx::experimental::this_system::resources();
 
    // Print topology
    for (auto& c : cList) {
       std::cout << c.name() << std::endl;
-      for (auto& c1 : c.components()) {
+      for (auto& c1 : c.resources()) {
          std::cout << " " << c1.name() << std::endl;
-         for (auto& c2 : c1.components()) {
+         for (auto& c2 : c1.resources()) {
             std::cout << "  " << c2.name() << std::endl;
-            for (auto& c3 : c2.components()) {
+            for (auto& c3 : c2.resources()) {
                std::cout << "   " << c3.name() << std::endl;
-               for (auto& c4 : c3.components()) {
+               for (auto& c4 : c3.resources()) {
                   std::cout << "    " << c4.name() << std::endl;
-                  for (auto& c5 : c4.components()) {
+                  for (auto& c5 : c4.resources()) {
                      std::cout << "     " << c5.name() << std::endl;
                   }
                }

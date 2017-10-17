@@ -54,13 +54,13 @@ set_property(TARGET executor_context PROPERTY CXX_STANDARD 17)
 set_property(TARGET executor_context PROPERTY CXX_STANDARD_REQUIRED ON)
 add_test(executor_context executor_context)
 
-add_executable (components components.cpp)
-target_link_libraries(components hwlocxx)
-target_include_directories(components PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(components ${Hwloc_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET components PROPERTY CXX_STANDARD 17)
-set_property(TARGET components PROPERTY CXX_STANDARD_REQUIRED ON)
-add_test(components components)
+add_executable (execution_resources execution_resources.cpp)
+target_link_libraries(execution_resources hwlocxx)
+target_include_directories(execution_resources PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(execution_resources ${Hwloc_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set_property(TARGET execution_resources PROPERTY CXX_STANDARD 17)
+set_property(TARGET execution_resources PROPERTY CXX_STANDARD_REQUIRED ON)
+add_test(execution_resources execution_resources)
 
 
 
