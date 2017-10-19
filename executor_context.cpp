@@ -20,7 +20,6 @@
 #include <future>
 #include <iostream>
 #include <numeric>
-#include <type_traits>
 
 // Include the Hwloc C++ wrapper
 #include <hwlocxx>
@@ -28,7 +27,8 @@
 int main()
 {
    // hwloc-based ExecutorContext
-   hwlocxx::experimental::ExecutionContext hwEC;
+   auto cList = hwlocxx::experimental::this_system::resources();
+   hwlocxx::experimental::ExecutionContext hwEC(cList[0]);
 
    auto& eR = hwEC.execution_resource();
 

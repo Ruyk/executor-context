@@ -20,5 +20,19 @@ namespace hwlocxx
 namespace experimental
 {
    void locality_executor::prepare_thread() { eC_.place_thread(); }
+
+    namespace this_system
+    {
+        auto resources() -> decltype(std::vector<thread_execution_resource_t>()) {
+            static hwlocxx::topology topo_;
+            auto objects = topo_.get_objects(0);
+            std::vector<thread_execution_resource_t> ret;
+            ret.reserve(objects.size());
+            for (auto o : objects) {
+                ret.emplace_back(o);
+            }
+            return ret;
+        }
+    }
 }
 }

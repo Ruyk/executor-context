@@ -15,6 +15,8 @@
 
 #include <chrono>
 #include <future>
+#include <optional>
+#include <sstream>
 
 namespace hwlocxx
 {
@@ -22,11 +24,11 @@ namespace experimental
 {
    struct thread_execution_resource_t
    {
-     friend class ExecutionContext;
+      friend class ExecutionContext;
 
       thread_execution_resource_t() = delete;
       ~thread_execution_resource_t() = default;
-      thread_execution_resource_t(const thread_execution_resource_t&) = delete;
+      thread_execution_resource_t(const thread_execution_resource_t&) = default;
       thread_execution_resource_t(thread_execution_resource_t&&) = delete;
       thread_execution_resource_t&
       operator=(thread_execution_resource_t&&) = delete;
@@ -38,22 +40,54 @@ namespace experimental
 
       const thread_execution_resource_t& member_of() const noexcept = delete;
 
-      size_t concurrency() const {
-        return concurrency_;
+      /**
+       * Number of resources available on this node that can execute
+       * concurrently.
+       *
+       * @return
+       */
+      size_t concurrency() const { return o_.get()->arity; }
+
+      size_t partition_size() const { return o_.get()->arity; }
+
+      std::string name() const
+      {
+         std::stringstream s;
+         s << o_ << std::endl;
+         return s.str();
       }
 
-      size_t partition_size() const {
-        return partition_size_;
+      std::vector<thread_execution_resource_t> resources()
+      {
+         auto subtreeObj = o_.get_descendants();
+         std::vector<thread_execution_resource_t> retVal;
+         retVal.reserve(subtreeObj.size());
+         for (auto o : subtreeObj) {
+            retVal.emplace_back(o);
+         }
+         return retVal;
+      }
+
+      /**
+       * Number of resources composing the node.
+       * This include executable and non executable resources.
+       *
+       * @return Number of resources (executable or not).
+       */
+      size_t num_resources() const { return o_.get()->arity; }
+
+      bool can_place_memory() const { return true; };
+
+      bool can_place_agent() const { return true; };
+
+      hwlocxx::topology::object get_object() const { return o_; }
+
+      explicit thread_execution_resource_t(hwlocxx::topology::object o) : o_{o}
+      {
       }
 
   private:
-      size_t concurrency_;
-      size_t partition_size_;
-
-      thread_execution_resource_t(size_t concurrency, size_t partition_size)
-          : concurrency_{concurrency}, partition_size_{partition_size}
-      {
-      }
+      hwlocxx::topology::object o_;
    };
 
    class ExecutionContext;
@@ -94,21 +128,22 @@ namespace experimental
       ExecutionContext& eC_;
    };
 
-
    class ExecutionContext
    {
-     friend class locality_executor;
+      friend class locality_executor;
+
   public:
-     ExecutionContext() : topo_(), partition_(), 
-      eR_{concurrency(), partition_size()} {
-     }
+      using execution_resource_t = thread_execution_resource_t;
+
+      ExecutionContext(execution_resource_t& eR)
+          : topo_{eR.get_object().get_topo()}, partition_(), eR_{eR}
+      {
+      }
 
       ~ExecutionContext() = default;
 
       ExecutionContext(ExecutionContext const&) = delete;
       ExecutionContext(ExecutionContext&&) = delete;
-
-      using execution_resource_t = thread_execution_resource_t;
 
       execution_resource_t const& execution_resource() const noexcept
       {
@@ -125,7 +160,7 @@ namespace experimental
       bool wait_for(std::chrono::duration<Rep, Period> const&) = delete;
 
       // Returns the topology of the system
-      inline topology get_topology() const { return topo_; }
+      inline topology get_topology() const { return *topo_; }
 
   protected:
       void place_thread()
@@ -149,11 +184,10 @@ namespace experimental
          stream_placement_info(std::cout);
       }
 
-
   private:
-      topology topo_;
+      gsl::not_null<const hwlocxx::topology*> topo_;
       bitmap partition_;
-      execution_resource_t eR_; 
+      execution_resource_t& eR_;
 
       /*
        * Outputs placement information for the current thread
@@ -183,6 +217,11 @@ namespace experimental
          return get_topology().get_width_at_depth(0);
       }
    };
+
+   namespace this_system
+   {
+      auto resources() -> decltype(std::vector<thread_execution_resource_t>());
+   } // this_system
 
 } // namespace experimental
 } // namespace hwlocxx

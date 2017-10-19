@@ -22,12 +22,10 @@
 
 #include <hwlocxx>
 
-int main(void)
+int main()
 {
    int depth;
-   unsigned i, n;
-   unsigned long size;
-   int levels;
+   int i, n;
    int topodepth;
 
    hwlocxx::topology topo;
@@ -62,5 +60,5 @@ int main(void)
    std::iota(std::begin(v1), std::end(v1), 1);
    auto sum = std::accumulate(std::begin(v1), std::end(v1), 0, std::plus<>());
    auto sumResult = (nElems * (nElems + 1) / 2);
-   return sumResult - sum;
+   return static_cast<int>(sumResult - sum);
 }

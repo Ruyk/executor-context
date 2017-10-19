@@ -52,7 +52,7 @@ class bitmap
       bMap_ = std::shared_ptr<__bitMaskStruct>{ptr, bitmapDeleter()};
    }
 
-   bitmap(hwloc_bitmap_t ptr) : bMap_{ptr, bitmapDeleter()} {}
+   explicit bitmap(hwloc_bitmap_t ptr) : bMap_{ptr, bitmapDeleter()} {}
 
    ~bitmap() = default;
 
@@ -62,13 +62,13 @@ class bitmap
    bitmap& operator=(bitmap&& bMap) = default;
 
    /* Modifying and not */
-   bitmap and_not(bitmap rhs)
+   bitmap and_not(const bitmap& rhs)
    {
       hwloc_bitmap_andnot(bMap_.get(), bMap_.get(), rhs.get());
       return *this;
    }
 
-   bitmap and_not(bitmap rhs) const
+   bitmap and_not(const bitmap& rhs) const
    {
       bitmap ret;
       hwloc_bitmap_andnot(ret.get(), bMap_.get(), rhs.get());
@@ -151,8 +151,22 @@ class topology
 
       bool in_subtree(object subtree) const
       {
-         return hwloc_obj_is_in_subtree(topo_->get(), obj_.get(),
-                                        subtree.get());
+         return (hwloc_obj_is_in_subtree(topo_->get(), obj_.get(),
+                                         subtree.get()) > 0);
+      }
+
+      /**
+       * Obtain the descendants of the current object in the topology
+       * @return vector of objects whose the current object is parent in the
+       * topology
+       */
+      std::vector<object> get_descendants() const
+      {
+         std::vector<object> retVal; // = topo_->get_objects(obj_.get()->depth);
+         for (int current = 0; current < obj_.get()->arity; current++) {
+            retVal.emplace_back(topo_.get(), obj_.get()->children[current]);
+         }
+         return retVal;
       }
 
       int get_logical_index() const { return obj_.get()->logical_index; }
@@ -187,10 +201,10 @@ class topology
 
    topology() : topology_{nullptr}
    {
-      hwloc_topology_t ptr = nullptr;
-      hwloc_topology_init(&ptr);
+      hwloc_topology_t system = nullptr;
+      hwloc_topology_init(&system);
       topology_ = std::shared_ptr<hwloc_topology>{
-          ptr, [=](hwloc_topology_t ptr) { hwloc_topology_destroy(ptr); }};
+          system, [=](hwloc_topology_t ptr) { hwloc_topology_destroy(ptr); }};
       hwloc_topology_load(topology_.get());
    }
 
@@ -201,7 +215,7 @@ class topology
    topology& operator=(const topology&) = default;
    topology& operator=(topology&&) = default;
    topology(topology&&) = default;
-   topology(const topology& rhs) : topology_{rhs.topology_} {}
+   topology(const topology& rhs) = default;
 
    int get_depth() { return hwloc_topology_get_depth(get()); }
 
@@ -249,7 +263,7 @@ class topology
       bitmap loc;
       auto err =
           hwloc_get_last_cpu_location(get(), loc.get(), static_cast<int>(b));
-      if (err) {
+      if (err > 0) {
          std::terminate();
       }
       return {loc};
@@ -261,7 +275,7 @@ class topology
    {
       bitmap cpuBind;
       auto err = hwloc_get_cpubind(get(), cpuBind.get(), static_cast<int>(b));
-      if (err) {
+      if (err > 0) {
          std::terminate();
       }
       return {cpuBind};
@@ -269,7 +283,7 @@ class topology
 
    /* Sets a new CPU bind set for the THREAD
     */
-   void set_cpubind(bitmap new_set, cpubind b)
+   void set_cpubind(const bitmap& new_set, cpubind b)
    {
       hwloc_set_cpubind(get(), new_set.get(), static_cast<int>(b));
    }

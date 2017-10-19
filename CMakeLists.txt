@@ -31,6 +31,9 @@ enable_testing()
 include_directories(include)
 include_directories(${Hwloc_INCLUDE_DIRS})
 
+# Force CLion to see the headers
+set(HEADERS include/hwlocxx.hpp include/hwlocxx_context.hpp include/hwlocxx include/allocator.hpp include/executor_context)
+
 add_subdirectory(src)
 
 add_executable (example example.c)
@@ -43,7 +46,7 @@ target_link_libraries(locality ${Hwloc_LIBRARIES} ${THREADS})
 target_link_libraries(locality hwlocxx)
 target_include_directories(locality PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-set_property(TARGET locality PROPERTY CXX_STANDARD 14)
+set_property(TARGET locality PROPERTY CXX_STANDARD 17)
 set_property(TARGET locality PROPERTY CXX_STANDARD_REQUIRED ON)
 
 add_executable (executor_context executor_context.cpp)
@@ -54,7 +57,7 @@ set_property(TARGET executor_context PROPERTY CXX_STANDARD 17)
 set_property(TARGET executor_context PROPERTY CXX_STANDARD_REQUIRED ON)
 add_test(executor_context executor_context)
 
-add_executable (execution_resources execution_resources.cpp)
+add_executable (execution_resources execution_resources.cpp ${HEADERS})
 target_link_libraries(execution_resources hwlocxx)
 target_include_directories(execution_resources PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(execution_resources ${Hwloc_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
@@ -66,8 +69,8 @@ add_test(execution_resources execution_resources)
 
 if (CLANG_TIDY_EXE)
   set_property(TARGET locality PROPERTY CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
-  # Clang Tidy does not like std::byte
-  #  set_property(TARGET executor_context PROPERTY CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+  set_property(TARGET executor_context PROPERTY CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+  set_property(TARGET execution_resources PROPERTY CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
 endif()
 
 add_test(locality locality)
