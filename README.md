@@ -28,7 +28,7 @@ Requirements
 
 Ubuntu Linux 16.04:
 
-* hwloc 
+* hwloc  (tip)
 * cmake 3.8 or above
 * gcc 5.8 or above
 

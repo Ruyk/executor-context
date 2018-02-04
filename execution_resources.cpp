@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  File: executor_context.cpp : Playground for executor context
+  File: executor_resources.cpp : Playground for executor resources
 
 */
 #include <algorithm>
@@ -50,9 +50,8 @@ int main()
       }
    }
 
-#if 0
    // hwloc-based ExecutorContext
-   hwlocxx::experimental::ExecutionContext hwEC;
+   hwlocxx::experimental::ExecutionContext hwEC(cList[0].resources()[0].resources()[0]);
 
    auto& eR = hwEC.execution_resource();
 
@@ -60,16 +59,28 @@ int main()
    std::cout << "Partition Size: " << eR.partition_size() << std::endl;
 
    auto mE = hwEC.executor();
-   /**
-    * eR.allocator();
-    *
-    */
+   
+   if (!hwEC.can_allocate()) {
+      std::cout << " Cannot allocate on the given resource " << std::endl;
+   }
+   auto mA = hwEC.allocator();
+   using context_allocator = decltype(hwEC)::AllocatorT;
+   // Missing allocator type from Executor
+   std::vector<int, context_allocator> v1(mA);
+   // How can the methods of the std::vector use the correct executor?
+   // it should be possible to retrieve the executor from the AllocatorT
+   // This method would use the caller thread
+   for(int i = 0; i < 10; i++) {
+      v1.push_back(42);
+   }
 
+   // This would use a thread based on the same executor resource
    auto fut = mE.twoway_execute([&]() -> unsigned {
-      std::cout << " Hello World " << std::endl;
-      return 42u;
+      auto retVal = v1.back();
+      v1.pop_back();
+      return retVal;
    });
 
    return (42 - fut.get());
-#endif // 0
+
 };

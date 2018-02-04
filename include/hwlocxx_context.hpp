@@ -134,6 +134,7 @@ namespace experimental
 
   public:
       using execution_resource_t = thread_execution_resource_t;
+      using AllocatorT = hwlocxx::allocator<int>;
 
       ExecutionContext(execution_resource_t& eR)
           : topo_{eR.get_object().get_topo()}, partition_(), eR_{eR}
@@ -151,6 +152,7 @@ namespace experimental
       }
 
       locality_executor executor() { return locality_executor(*this); }
+      AllocatorT allocator() { return AllocatorT(get_topology(), eR_.get_object()); }
 
       // Waiting functions:
       void wait() = delete;
@@ -161,6 +163,10 @@ namespace experimental
 
       // Returns the topology of the system
       inline topology get_topology() const { return *topo_; }
+
+      bool can_allocate() const {
+         return true;
+      }
 
   protected:
       void place_thread()
@@ -216,6 +222,8 @@ namespace experimental
          // total number of CPUs
          return get_topology().get_width_at_depth(0);
       }
+
+
    };
 
    namespace this_system

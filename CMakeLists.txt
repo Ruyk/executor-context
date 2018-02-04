@@ -7,7 +7,7 @@ find_package(Threads REQUIRED)
 find_package(Hwloc REQUIRED)
 
 if (NOT Hwloc_FOUND) 
-  message(FATAL "Cannot find HW LOC library")
+  message(FATAL " Cannot find HW LOC library")
 endif()
 
 find_program(
@@ -36,13 +36,15 @@ set(HEADERS include/hwlocxx.hpp include/hwlocxx_context.hpp include/hwlocxx incl
 
 add_subdirectory(src)
 
+set(affinity_lib "${HWLOC_ROOT}/lib/libhwloc.so.0")
+
 add_executable (example example.c)
-target_link_libraries(example ${Hwloc_LIBRARIES})
+target_link_libraries(example ${affinity_lib})
 target_include_directories(example PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 add_test(example example)
 
 add_executable (locality locality.cpp)
-target_link_libraries(locality ${Hwloc_LIBRARIES} ${THREADS})
+target_link_libraries(locality ${affinity_lib} ${THREADS})
 target_link_libraries(locality hwlocxx)
 target_include_directories(locality PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
@@ -52,7 +54,7 @@ set_property(TARGET locality PROPERTY CXX_STANDARD_REQUIRED ON)
 add_executable (executor_context executor_context.cpp)
 target_link_libraries(executor_context hwlocxx)
 target_include_directories(executor_context PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(executor_context ${Hwloc_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(executor_context ${affinity_lib} ${CMAKE_THREAD_LIBS_INIT})
 set_property(TARGET executor_context PROPERTY CXX_STANDARD 17)
 set_property(TARGET executor_context PROPERTY CXX_STANDARD_REQUIRED ON)
 add_test(executor_context executor_context)
@@ -60,7 +62,7 @@ add_test(executor_context executor_context)
 add_executable (execution_resources execution_resources.cpp ${HEADERS})
 target_link_libraries(execution_resources hwlocxx)
 target_include_directories(execution_resources PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(execution_resources ${Hwloc_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(execution_resources ${affinity_lib} ${CMAKE_THREAD_LIBS_INIT})
 set_property(TARGET execution_resources PROPERTY CXX_STANDARD 17)
 set_property(TARGET execution_resources PROPERTY CXX_STANDARD_REQUIRED ON)
 add_test(execution_resources execution_resources)

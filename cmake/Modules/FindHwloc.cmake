@@ -133,7 +133,7 @@ if(WIN32)
   set(Hwloc_LDFLAGS "${Hwloc_LIBRARY}")
 
 else()
-
+  message(STATUS "Here")
   if(CMAKE_CROSSCOMPILING)
 
   find_path(Hwloc_INCLUDE_DIRS
@@ -156,6 +156,7 @@ else()
     set(Hwloc_VERSION "1.7.0")
   endif()
 
+
   else() # Find with pkgconfig for non-crosscompile builds
 
   find_package(PkgConfig)
@@ -168,6 +169,8 @@ else()
     endforeach()
     set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:$ENV{PKG_CONFIG_PATH}")
   endif()
+
+  message(STATUS "Vars: ${Hwloc_INCLUDE_DIRS} ${Hwloc_LIBRARYES}")
 
   if(hwloc_FIND_REQUIRED)
     set(_hwloc_OPTS "REQUIRED")
