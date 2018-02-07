@@ -36,6 +36,7 @@ set(HEADERS include/hwlocxx.hpp include/hwlocxx_context.hpp include/hwlocxx incl
 
 add_subdirectory(src)
 
+# Manually set to avoid problems with custom configuration
 set(affinity_lib "${HWLOC_ROOT}/lib/libhwloc.so.0")
 
 add_executable (example example.c)
