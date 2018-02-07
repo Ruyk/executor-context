@@ -51,22 +51,33 @@ int main()
    }
 
    // hwloc-based ExecutorContext
-   hwlocxx::experimental::ExecutionContext hwEC(cList[0].resources()[0].resources()[0]);
+   auto res = cList[0].resources()[0].resources()[0].resources();
+   hwlocxx::experimental::ExecutionContext hwEC(res[0]);
 
+   // Note that, because the resources are defined as references, if 
+   // we don't keep the object we loose the execution_resource
+   // and the code segfaults due to missing references.
+   // The executor_context interface needs to take execution resources
+   // by value to avoid this!
    auto& eR = hwEC.execution_resource();
 
    std::cout << "Concurrency: " << eR.concurrency() << std::endl;
    std::cout << "Partition Size: " << eR.partition_size() << std::endl;
+   std::cout << "hwEC: " << eR.name();
 
    auto mE = hwEC.executor();
    
    if (!hwEC.can_allocate()) {
       std::cout << " Cannot allocate on the given resource " << std::endl;
+      return 1;
    }
+
    auto mA = hwEC.allocator();
    using context_allocator = decltype(hwEC)::AllocatorT;
+
    // Missing allocator type from Executor
-   std::vector<int, context_allocator> v1(mA);
+   std::vector<int, context_allocator> v1(10, mA);
+
    // How can the methods of the std::vector use the correct executor?
    // it should be possible to retrieve the executor from the AllocatorT
    // This method would use the caller thread
@@ -82,5 +93,4 @@ int main()
    });
 
    return (42 - fut.get());
-
 };
